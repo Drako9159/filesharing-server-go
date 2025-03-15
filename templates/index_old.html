@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Sharing</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+</head>
+<body>
+    <h1>Available Files</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Size</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for filename, size in file_info %}
+                <tr>
+                    <td>{{ filename }}</td>
+                    <td>{{ size }}</td>
+                    <td>
+                        <a href="/download/{{ filename }}" download>
+                            <button>Download</button>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>File Upload</h2>
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".txt, .pdf, .jpg, .png, .zip .mp4 .apk .mp3" required>
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html>
