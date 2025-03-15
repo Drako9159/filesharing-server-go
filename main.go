@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 var tmpl_old = `
@@ -115,16 +117,33 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func staticHandlerOld(w http.ResponseWriter, r *http.Request) {
-	file, err := embeddedFiles.ReadFile("static" + r.URL.Path)
+func staticHandler(w http.ResponseWriter, r *http.Request) {
+	// La ruta correcta debe ser así
+	path := filepath.Join("static", r.URL.Path[len("/static/"):])
+
+	file, err := embeddedFiles.ReadFile(path)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
+
+	// Establecer el tipo de contenido basado en la extensión del archivo
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".css":
+		w.Header().Set("Content-Type", "text/css")
+	case ".js":
+		w.Header().Set("Content-Type", "application/javascript")
+	case ".png":
+		w.Header().Set("Content-Type", "image/png")
+	case ".jpg", ".jpeg":
+		w.Header().Set("Content-Type", "image/jpeg")
+	}
+
 	w.Write(file)
 }
 
-func staticHandler(w http.ResponseWriter, r *http.Request) {
+func staticHandlerOld(w http.ResponseWriter, r *http.Request) {
 	path := "static" + r.URL.Path[len("/static/"):]
 	file, err := embeddedFiles.ReadFile(path)
 	if err != nil {
@@ -135,20 +154,47 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(file)
 }
 
-// getLocalIP obtiene la IP local de la máquina en la red
 func getLocalIP() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return "localhost"
 	}
 
+	// Primero intentamos encontrar direcciones IPv4 no locales
 	for _, addr := range addrs {
 		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-			if ipNet.IP.To4() != nil {
-				return ipNet.IP.String()
+			if ipv4 := ipNet.IP.To4(); ipv4 != nil {
+				// Descartamos direcciones de Docker, VirtualBox y otras interfaces virtuales
+				if !strings.HasPrefix(ipv4.String(), "172.") &&
+					!strings.HasPrefix(ipv4.String(), "10.") &&
+					!strings.HasPrefix(ipv4.String(), "192.168.56.") {
+					return ipv4.String()
+				}
 			}
 		}
 	}
+
+	// Si no encontramos ninguna adecuada, intentamos con cualquier IPv4 privada
+	for _, addr := range addrs {
+		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipv4 := ipNet.IP.To4(); ipv4 != nil {
+				// Buscamos direcciones de red local típicas (192.168.X.X)
+				if strings.HasPrefix(ipv4.String(), "192.168.") {
+					return ipv4.String()
+				}
+			}
+		}
+	}
+
+	// Si aún no encontramos, tomamos cualquiera que no sea loopback
+	for _, addr := range addrs {
+		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipv4 := ipNet.IP.To4(); ipv4 != nil {
+				return ipv4.String()
+			}
+		}
+	}
+
 	return "localhost"
 }
 
@@ -156,9 +202,18 @@ func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/download/", downloadHandler)
 	http.HandleFunc("/upload", uploadHandler)
-	// http.HandleFunc("/static/", staticHandlerOld)
+	// http.HandleFunc("/static/", staticHandler)
 
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	// Crea un sub-filesystem que solo ve el directorio "static"
+	staticFS, err := fs.Sub(embeddedFiles, "static")
+	if err != nil {
+		panic(err)
+	}
+
+	// Sirve los archivos estáticos desde el sub-filesystem
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+
+	// http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	localIP := getLocalIP()
 	port := "8080"
