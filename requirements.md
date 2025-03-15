@@ -2,7 +2,7 @@
 go mod init server-go
 
 # For run and probe
-go run server.go
+go run main.go
 
 ## For compile for windows stay on windows
 go build -o server.exe
