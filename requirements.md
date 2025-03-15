@@ -1,4 +1,4 @@
-# Initalize module
+# Inicialize module
 go mod init server-go
 
 # For run and probe
