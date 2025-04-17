@@ -118,7 +118,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
-	// La ruta correcta debe ser así
+	// This route for static files
 	path := filepath.Join("static", r.URL.Path[len("/static/"):])
 
 	file, err := embeddedFiles.ReadFile(path)
@@ -154,6 +154,7 @@ func staticHandlerOld(w http.ResponseWriter, r *http.Request) {
 	w.Write(file)
 }
 
+// Function for check ip availability
 func getLocalIP() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
