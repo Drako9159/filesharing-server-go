@@ -77,7 +77,7 @@
                     <span class="file-size">{{ .Size }}</span>
                 </div>
                 <div class="actions">
-                    <a href="/download/{{ .Name }}" class="btn-act">⬇️</a>
+                    <a href="/download/{{ .Name }}" class="btn-act" download="{{ .Name }}">⬇️</a>
                     <form action="/delete" method="post" style="display:inline;" onsubmit="return confirm('¿Borrar {{ .Name }}?');">
                         <input type="hidden" name="filename" value="{{ .Name }}">
                         <button type="submit" class="btn-act btn-del">🗑️</button>

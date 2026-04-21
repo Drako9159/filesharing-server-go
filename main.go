@@ -105,6 +105,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	if fileName == "" || strings.Contains(fileName, "..") {
 		http.Error(w, "Invalid file", 400); return
 	}
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileName))
 	http.ServeFile(w, r, fileName)
 }
 
