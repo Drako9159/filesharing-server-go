@@ -13,4 +13,4 @@ GOOS=windows GOARCH=amd64 go build -o server.exe
 go install github.com/akavel/rsrc@latest
 
 # Generate .syso
-$(go env GOPATH)/bin/rsrc -ico home_server.ico -manifest app.manifest -o rsrc.syso
+$(go env GOPATH)/bin/rsrc -ico home_server_2.ico -manifest app.manifest -o rsrc.syso
