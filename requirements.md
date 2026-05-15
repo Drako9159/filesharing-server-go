@@ -4,6 +4,9 @@ go mod init server-go
 # For run and probe
 go run main.go
 
+# For install mod tidy
+go mod tidy
+
 ## For compile for windows stay on windows
 go build -o server.exe
 ## For compile for windows stay on another system

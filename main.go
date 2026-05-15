@@ -12,6 +12,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/mdp/qrterminal/v3"
 )
 
 //go:embed templates/* static/*
@@ -154,9 +156,12 @@ func main() {
 
 	port := "8080"
 	localIP := getLocalIP()
+	serverURL := fmt.Sprintf("http://%s:%s", localIP, port)
 	fmt.Println("-------------------------------------------")
 	fmt.Println("🚀 GO SECURE SERVER STARTED")
-	fmt.Printf("🌐 Network: http://%s:%s\n", localIP, port)
+	fmt.Printf("🌐 Network: %s\n", serverURL)
+	fmt.Println("📱 Escanea el código QR para acceder:")
+	qrterminal.GenerateHalfBlock(serverURL, qrterminal.L, os.Stdout)
 	fmt.Println("-------------------------------------------")
 
 	srv := &http.Server{
